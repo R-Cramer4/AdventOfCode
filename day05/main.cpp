@@ -78,14 +78,6 @@ int main(){
             }
         }
     }
-    /*
-    for(int i = 0; i < seeds.size(); i++){
-        cout << "Seed " << i << "\n";
-        for(int j = 0; j < seeds[i].size(); j++){
-            cout << "   " << seeds[i][j].currentPos << " is " << seeds[i][j].num << "\n";
-        }
-    }
-    */
     ulint min = 0xffffffffffffffff;
     for(int i = 0; i < seeds.size(); i++){
         //cout << "seed " << i << " " << seeds[i].back().currentPos << " is " << seeds[i].back().num << "\n";
@@ -113,8 +105,6 @@ int main(){
 
     // will do a for loop to run through each mappings
     for(int i = 0; i < 7; i++){
-        cout << "doing " << seedLoc[i] << " mapping\n";
-        cout << "   size of seedRanges = " << seedRanges.size() << "\n";
         vector<vector<ulint>> currentRanges = ranges.at(i);
         // a range could split into 2 or 3 ranges
         // should probably do the next step in a function
@@ -122,27 +112,17 @@ int main(){
         mapRanges(&seedRanges, currentRanges, 0);
 
     }
-    cout << "finished" << endl;
     // find the lowest location
     ulint minLoc = 0xffffffffffffffff;
     for(int i = 0; i < seedRanges.size(); i++){
         if(seedRanges.at(i).start < minLoc) minLoc = seedRanges.at(i).start;
     }
     cout << "Lowest seed location: " << minLoc << "\n";
-
-
     return 0;
 }
 
+
 void mapRanges(vector<seedRange> *seedRanges, vector<vector<ulint>> currentRanges, int loc){
-    if(loc >= seedRanges->size()) return;
-    //cout << "\r" << seedRanges->size() << "      ";
-    ulint avSize = 0;
-    for(int i = 0; i < seedRanges->size(); i++){
-        avSize += seedRanges->at(i).length;
-    }
-    if(avSize < 0) cout << "impossible\n";
-    //cout << "seed ranges average size = " << avSize << "\n";
     // need to loop through seed ranges
     // when we need to split, split the range, delete current range, add the 2 or 3 ranges to the end, break out of the loop, call mapRanges starting at the last location
     int callAgain = -1;
@@ -164,51 +144,39 @@ void mapRanges(vector<seedRange> *seedRanges, vector<vector<ulint>> currentRange
                 break;
             }
             // 3. this seed range is partially in the map range
-            if(seedStart < mapStart && seedStart + seedLength <= mapStart + mapLength){
+            if(seedStart < mapStart && seedStart + seedLength <= mapStart + mapLength && seedStart + seedLength > mapStart){
                 // left side is outside, right side is inside
-                seedRange tempRange;
-                tempRange.start = mapStart;
-                tempRange.length = seedStart + seedLength - mapStart;
-                seedRanges->push_back(tempRange);
+                seedRanges->push_back({mapStart, seedStart + seedLength - mapStart});
                 // ^ right side
-                tempRange.start = mapStart;
-                tempRange.length = mapStart - seedStart;
-                seedRanges->push_back(tempRange);
-                seedRanges->erase(seedRanges->begin() + i);
+                seedRanges->push_back({seedStart, mapStart - seedStart});
                 // ^ left side
+
+                seedRanges->erase(seedRanges->begin() + i);
                 callAgain = i;
                 break;
             }
             if((seedStart >= mapStart && seedStart < mapStart + mapLength) 
                     && seedStart + seedLength > mapStart + mapLength){
                 // left side is inside, right side is outside
-                seedRange tempRange;
-                tempRange.start = mapStart + mapLength;
-                tempRange.length = seedStart + seedLength - (mapStart + mapLength);
-                seedRanges->push_back(tempRange);
+                seedRanges->push_back({mapStart + mapLength, seedStart + seedLength - (mapStart + mapLength)});
                 // ^ right side
-                tempRange.start = seedRanges->at(i).start;
-                tempRange.length = mapStart + mapLength - seedStart;
-                seedRanges->push_back(tempRange);
+                seedRanges->push_back({seedStart, mapStart + mapLength - seedStart});
+                // ^ left side
+
                 seedRanges->erase(seedRanges->begin() + i);
                 callAgain = i;
                 break;
             }
             // 4. the seed range completely contains the map range
             if(seedStart < mapStart && seedStart + seedLength > mapStart + mapLength){
-                seedRange tempRange;
-                tempRange.start = seedRanges->at(i).start;
-                tempRange.length = mapStart - seedStart;
-                seedRanges->push_back(tempRange);
-                seedRanges->erase(seedRanges->begin() + i);
+                seedRanges->push_back({seedStart, mapStart - seedStart});
                 // ^ left side
-                tempRange.start = mapStart;
-                tempRange.length = mapLength;
-                seedRanges->push_back(tempRange);
+                seedRanges->push_back({mapStart, mapLength});
                 // ^ middle
-                tempRange.start = mapStart + mapLength;
-                tempRange.length = seedStart + seedLength - (mapStart + mapLength);
-                seedRanges->push_back(tempRange);
+                seedRanges->push_back({mapStart + mapLength, seedStart + seedLength - (mapStart + mapLength)});
+                // ^ right side
+
+                seedRanges->erase(seedRanges->begin() + i);
                 callAgain = i;
                 break;
             }
