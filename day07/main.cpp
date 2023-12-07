@@ -6,7 +6,7 @@
 using namespace std;
 
 enum kind {five, four, fullHouse, three, twoPair, onePair, highCard, none};
-char cards[13] = {'2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K', 'A'};
+char cards[13] = {'J', '2', '3', '4', '5', '6', '7', '8', '9', 'T', 'Q', 'K', 'A'};
 int findCard(char card);
 
 int main(){
@@ -34,6 +34,43 @@ int main(){
             for(int i = 0; i < 5; i++){
                 if(chars[i] != -1) uniqueChars++;
             }
+
+            // Joker time
+            int jokers = 0;
+            if(hands[i].first.find('J') != -1){
+                uniqueChars--;
+                if(uniqueChars <= 1){
+                    hands.at(i).second.first = five;
+                    continue;
+                }
+                jokers = count(hands[i].first.begin(), hands[i].first.end(), 'J');
+                if(jokers == 3){
+                    hands.at(i).second.first = four;
+                    continue;
+                }
+                if(uniqueChars == 2 && jokers == 2){
+                    hands.at(i).second.first = four;
+                    continue;
+                }
+                if(uniqueChars == 2 && jokers == 1){
+                    if(count(hands.at(i).first.begin(), hands.at(i).first.end(), cards[chars[0]]) == 3 ||
+                    count(hands.at(i).first.begin(), hands.at(i).first.end(), cards[chars[1]]) == 3 ||
+                    count(hands.at(i).first.begin(), hands.at(i).first.end(), cards[chars[2]]) == 3){
+                        hands.at(i).second.first = four;
+                    }else hands.at(i).second.first = fullHouse;
+                    continue;
+                }
+                if(uniqueChars == 3){
+                    hands.at(i).second.first = three;
+                    continue;
+                }
+                if(uniqueChars == 4){
+                    hands.at(i).second.first = onePair;
+                    continue;
+                }
+                cout << "whoops\n";
+            }
+
             // five
             if(uniqueChars == 1){
                 hands.at(i).second.first = five;
@@ -55,7 +92,8 @@ int main(){
             }
 
             // three
-            if(uniqueChars == 3 && (count(hands.at(i).first.begin(), hands.at(i).first.end(), cards[chars[0]]) == 3 ||
+            if(uniqueChars == 3 && 
+                    (count(hands.at(i).first.begin(), hands.at(i).first.end(), cards[chars[0]]) == 3 ||
                     count(hands.at(i).first.begin(), hands.at(i).first.end(), cards[chars[1]]) == 3 ||
                     count(hands.at(i).first.begin(), hands.at(i).first.end(), cards[chars[2]]) == 3)){
                 hands.at(i).second.first = three;
@@ -106,6 +144,7 @@ int main(){
     int totalWinnings = 0;
     for(int i = 0; i < hands.size(); i++){
         totalWinnings += hands.at(i).second.second * (i + 1);
+        //cout << "hands[" << i << "] = " << hands.at(i).first << ", " << hands.at(i).second.first << ", " << hands.at(i).second.second << "\n";
     }
     cout << "total winnings = " << totalWinnings << "\n";
 
