@@ -1,6 +1,6 @@
-#include <algorithm>
 #include <climits>
 #include <iostream>
+#include <ostream>
 #include <queue>
 #include <string>
 #include <utility>
@@ -15,12 +15,12 @@ struct Score{
 };
 
 vector<vector<int>> map;
-pair<int, int> start;
-pair<int, int> endPos;
-int find_best_path();
+int find_best_path(pair<int, int> start, pair<int, int> endPos, char startDir, char *end);
 
 int main(){
     string temp;
+    pair<int, int> start;
+    pair<int, int> endPos;
     while(getline(cin, temp)){
         vector<int> m;
         for(int i = 0; i < temp.size(); i++){
@@ -43,14 +43,71 @@ int main(){
         }
         map.push_back(m);
     }
-    int best_path = find_best_path();
+    char dir;
+    int best_path = find_best_path(start, endPos, 'R', &dir);
     cout << "The best path has a score of " << best_path << endl;
+
+    int unique_options = 0;
+    for(int i = 0; i < map.size(); i++){
+        cout << '\r' << i << flush;
+        for(int j = 0; j < map[i].size(); j++){
+            if(map[i][j] != 1){
+                unsigned long long int b = find_best_path(start, {j, i}, 'R', &dir);
+                char temp;
+                unsigned long long int a = find_best_path({j, i}, endPos, dir, &temp);
+                //cout << j << ", " << i << ": " << a + b << " : " << temp << endl;
+                if(a + b == best_path) {
+                    unique_options++;
+                    map[i][j] = 4;
+                }
+            }
+        }
+    }
+    cout << endl;
+    for(int i = 0; i < map.size(); i++){
+        for(int j = 0; j < map[i].size(); j++){
+            switch(map[i][j]){
+                case 0:
+                    cout << '.';
+                    break;
+                case 1:
+                    cout << '#';
+                    break;
+                case 2:
+                    cout << 'S';
+                    break;
+                case 3:
+                    cout << 'E';
+                    break;
+                case 4: 
+                    cout << 'O';
+                    break;
+            }
+        }
+        cout << '\n';
+    }
+    cout << endl;
+    cout << endl << unique_options << " options" << endl;
+    // 527 is too low
 }
 
-int find_best_path(){
-    char dir = 'R'; // the reindeer always starts facing to the right
+int find_best_path(pair<int, int> start, pair<int, int> endPos, char startDir, char *end){
+    char dir = startDir; // the reindeer always starts facing to the right
     Score scores[map.size()][map[0].size()];
-    scores[start.second][start.first].r = 0;
+    switch(dir){
+        case 'R':
+            scores[start.second][start.first].r = 0;
+            break;
+        case 'L':
+            scores[start.second][start.first].l = 0;
+            break;
+        case 'U':
+            scores[start.second][start.first].u = 0;
+            break;
+        case 'D':
+            scores[start.second][start.first].d = 0;
+            break;
+    }
 
     queue<pair<pair<int, int>, char>> nodes;
     nodes.push({{start.first, start.second}, dir});
@@ -118,5 +175,23 @@ int find_best_path(){
         }
     }
     Score d = scores[endPos.second][endPos.first];
-    return min(min(d.l, d.r), min(d.u, d.d));
+    //cout << d.l << ", " << d.r << ", " << d.u << ", " << d.d << endl;
+    if(d.l <= d.r && d.l <= d.u && d.l <= d.d){
+        *end = 'L';
+        return d.l;
+    }
+    if(d.r <= d.l && d.r <= d.u && d.r <= d.d){
+        *end = 'R';
+        return d.r;
+    }
+    if(d.u <= d.r && d.u <= d.l && d.u <= d.d){
+        *end = 'U';
+        return d.u;
+    }
+    if(d.d <= d.r && d.d <= d.l && d.d <= d.u){
+        *end = 'D';
+        return d.d;
+    }
+    cout << "other" << endl;
+    return d.r;
 }
