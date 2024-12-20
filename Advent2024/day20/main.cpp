@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <iostream>
 #include <queue>
 #include <string>
@@ -6,7 +7,7 @@
 using namespace std;
 
 #define CHEAT_LENGTH 20
-#define THREADS 16
+#define THREADS 8
 
 vector<vector<int>> map;
 pair<int, int> endPos;
@@ -52,7 +53,6 @@ pair<int, int> start;
     unsigned long long int results[THREADS];
     int len = path.size() / THREADS;
     for(int i = 0; i < THREADS; i++){
-        cout << "From " << i * len << " to " << (i + 1) * len << endl;
         threads.emplace_back(getNumPaths, (i * len), (i + 1) * len, pathLen, ref(results[i]));
     }
     
@@ -86,8 +86,8 @@ void getNumPaths(int start, int end, int pathLen, unsigned long long &ret){
         //cout << path[i].first << ", " << path[i].second << endl;
         // each cheat is identified by its start and end
         // so length = i + cheat length + find_path(cheat_end.x, cheat_end.y, false);
-        for(int k = 0; k < map.size(); k++){
-            for(int j = 0; j < map[k].size(); j++){
+        for(int k = max(0, path[i].second - 20); k < min((int)map.size(), path[i].second + 21); k++){
+            for(int j = max(0, path[i].first - 20); j < min((int)map[k].size(), path[i].second + 21); j++){
                 if(map[k][j] == 1) continue;
                 int cheatLength = dist({j, k}, path[i]);
                 if(cheatLength <= CHEAT_LENGTH){
