@@ -1,5 +1,5 @@
-#include <algorithm>
 #include <iostream>
+#include <map>
 #include <queue>
 #include <string>
 #include <thread>
@@ -7,11 +7,13 @@
 using namespace std;
 
 #define CHEAT_LENGTH 20
-#define THREADS 8
+#define THREADS 16
 
-vector<vector<int>> map;
+vector<vector<int>> inMap;
 pair<int, int> endPos;
 vector<pair<int, int>> path;
+map<pair<int, int>, int> seen;
+
 
 int find_path(int x, int y, bool orig);
 int dist(pair<int, int> p1, pair<int, int> p2);
@@ -33,15 +35,15 @@ pair<int, int> start;
                     break;
                 case 'S':
                     m.push_back(2);
-                    start = {i, map.size()};
+                    start = {i, inMap.size()};
                     break;
                 case 'E':
                     m.push_back(3);
-                    endPos = {i, map.size()};
+                    endPos = {i, inMap.size()};
                     break;
             }
         }
-        map.push_back(m);
+        inMap.push_back(m);
     }
     int pathLen = find_path(start.first, start.second, true);
     cout << "Path has length of " << pathLen << endl;
@@ -65,13 +67,13 @@ pair<int, int> start;
     }
 
     /* part 1
-    for(int i = 1; i < map.size() - 1; i++){
+    for(int i = 1; i < inMap.size() - 1; i++){
         cout << '\r' << i << flush;
-        for(int j = 1; j < map[i].size() - 1; j++){
-            if(map[i][j] == 1){
-                map[i][j] = 0;
+        for(int j = 1; j < inMap[i].size() - 1; j++){
+            if(inMap[i][j] == 1){
+                inMap[i][j] = 0;
                 int newPath = find_path();
-                map[i][j] = 1;
+                inMap[i][j] = 1;
                 if(newPath + 100 <= path) numCheats++;
             }
         }
@@ -86,9 +88,9 @@ void getNumPaths(int start, int end, int pathLen, unsigned long long &ret){
         //cout << path[i].first << ", " << path[i].second << endl;
         // each cheat is identified by its start and end
         // so length = i + cheat length + find_path(cheat_end.x, cheat_end.y, false);
-        for(int k = max(0, path[i].second - 20); k < min((int)map.size(), path[i].second + 21); k++){
-            for(int j = max(0, path[i].first - 20); j < min((int)map[k].size(), path[i].second + 21); j++){
-                if(map[k][j] == 1) continue;
+        for(int k = 0; k < inMap.size(); k++){
+            for(int j = 0; j < inMap[k].size(); j++){
+                if(inMap[k][j] == 1) continue;
                 int cheatLength = dist({j, k}, path[i]);
                 if(cheatLength <= CHEAT_LENGTH){
                     // can cheat
@@ -101,14 +103,19 @@ void getNumPaths(int start, int end, int pathLen, unsigned long long &ret){
     ret = numCheats;
 }
 int find_path(int x, int y, bool orig){
+    try {
+        return seen.at({x, y});
+    
+    } catch (...) {}
+
     pair<int, int> start = {x, y};
     queue<pair<int, int>> q;
     vector<vector<pair<int, int>>> parents;
     vector<vector<int>> visited;
-    for(int i = 0; i < map.size(); i++){
+    for(int i = 0; i < inMap.size(); i++){
         vector<pair<int, int>> p;
         vector<int> v;
-        for(int j = 0; j < map[i].size(); j++){
+        for(int j = 0; j < inMap[i].size(); j++){
             p.push_back({0, 0});
             v.push_back(0);
         }
@@ -123,25 +130,25 @@ int find_path(int x, int y, bool orig){
         q.pop();
 
         if(n.first - 1 >= 0 &&!visited[n.second][n.first - 1] && 
-                map[n.second][n.first - 1] != 1){
+                inMap[n.second][n.first - 1] != 1){
             q.push({n.first - 1, n.second});
             visited[n.second][n.first - 1] = 1;
             parents[n.second][n.first - 1] = n;
         }
-        if(n.first + 1 < map[0].size() && !visited[n.second][n.first + 1] && 
-                map[n.second][n.first + 1] != 1){
+        if(n.first + 1 < inMap[0].size() && !visited[n.second][n.first + 1] && 
+                inMap[n.second][n.first + 1] != 1){
             q.push({n.first + 1, n.second});
             visited[n.second][n.first + 1] = 1;
             parents[n.second][n.first + 1] = n;
         }
         if(n.second - 1 >= 0 && !visited[n.second - 1][n.first] && 
-                map[n.second - 1][n.first] != 1){
+                inMap[n.second - 1][n.first] != 1){
             q.push({n.first, n.second - 1});
             visited[n.second - 1][n.first] = 1;
             parents[n.second - 1][n.first] = n;
         }
-        if(n.second + 1 < map.size() && !visited[n.second + 1][n.first] && 
-                map[n.second + 1][n.first] != 1){
+        if(n.second + 1 < inMap.size() && !visited[n.second + 1][n.first] && 
+                inMap[n.second + 1][n.first] != 1){
             q.push({n.first, n.second + 1});
             visited[n.second + 1][n.first] = 1;
             parents[n.second + 1][n.first] = n;
@@ -156,6 +163,7 @@ int find_path(int x, int y, bool orig){
         length++;
         p = parents[p.second][p.first];
     }
+    seen.insert({{x, y}, length});
     return length;
 }
 int dist(pair<int, int> p1, pair<int, int> p2){
