@@ -105,7 +105,6 @@ int main(){
     }
     if((a + b) == output) cout << "Correct" << endl;
     cout << "Number outputted = " << output << " wanted: " << a + b << endl;
-    // 568368316 is too low
 }
 bool Gate::operate(){
     // only do the operation if we can
